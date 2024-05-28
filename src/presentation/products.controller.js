@@ -18,7 +18,7 @@ const validateProduct = async (req, res, next) => {
     await productScheme.validate(req.body);
     next();
   } catch (error) {
-    res.status(400).send(error.errors[0]);
+    res.status(502).send(error.errors[0]);
   }
 };
 

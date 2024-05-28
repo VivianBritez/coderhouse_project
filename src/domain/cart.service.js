@@ -8,9 +8,11 @@ const productFile = path.resolve('src/implementation/datos/products.json')
 class CartService {
     constructor() { }
 
-    async getAllCarts() {
+    async getCartList() {
+        console.log("start")
         try {
             let carts = await fs.readFile(fileCart, 'utf8');
+            console.log("filecarts", fileCart)
             carts = JSON.parse(carts);
             return carts
         } catch (error) {
@@ -34,8 +36,8 @@ class CartService {
             const doesntExits = []
             body.map(e => {
                 const productExists = products.some(product => product.id === e.id);
-                
-               
+
+
                 let obj = {
                     id: id,
                     products: e
@@ -49,14 +51,14 @@ class CartService {
 
             });
             const listProduct = []
-            let newCart = [{id: id, products: listProduct}]
-           
+            let newCart = [{ id: id, products: listProduct }]
+
             const invalidProductIds = doesntExits.map(item => item.id);
-           
-              data.map(e => e.products).filter(item => {
-             
-                let obj ={}
-                if(invalidProductIds !== item.id){
+
+            data.map(e => e.products).filter(item => {
+
+                let obj = {}
+                if (invalidProductIds !== item.id) {
                     obj.id = item.id
                     obj.quantity = item.quantity
                     listProduct.push(obj)
@@ -65,8 +67,8 @@ class CartService {
 
             console.log('new cart', newCart);
 
-            newCart = listProduct.length === 0 ? [] : [{id: id, products: listProduct}]
-     
+            newCart = listProduct.length === 0 ? [] : [{ id: id, products: listProduct }]
+
             return {
                 validate: newCart,
                 noValidate: doesntExits.map(e => e.id)
@@ -84,27 +86,27 @@ class CartService {
             const products = await this.getAllProducts();
             const data = await this.validateProducts(products, body.products, body.id);
             console.log("validacion ", data)
-            const cartsList = await this.getAllCarts();
-           if(data.validate.length > 0 ) cartsList.push(data.validate[0]);
+            const cartsList = await this.getCartList();
+            if (data.validate.length > 0) cartsList.push(data.validate[0]);
             await fs.writeFile(fileCart, JSON.stringify(cartsList));
             let message, isValidate;
-            if(data.noValidate.length > 0 && data.validate.length === 0){
+            if (data.noValidate.length > 0 && data.validate.length === 0) {
                 message = `No se pudo crear el carrito por que no existen los ids 
                  ${data.noValidate} enviados`
-                 isValidate = false
-            }else if(data.noValidate.length > 0 && data.validate.length > 0 ){
+                isValidate = false
+            } else if (data.noValidate.length > 0 && data.validate.length > 0) {
 
                 message = `Algunos productos seleccionados ya no existen o hubo un error revisar los ids 
                 ${data.noValidate} enviados`
                 isValidate = true
 
-            }else if(data.noValidate.length == 0 && data.validate.length > 0 ){
+            } else if (data.noValidate.length == 0 && data.validate.length > 0) {
                 message = 'Se ha creado exitosamente'
-                isValidate =true
-            
+                isValidate = true
+
             }
-           body = data.validate
-            return {message ,body,  isValidate}
+            body = data.validate
+            return { message, body, isValidate }
         } catch (error) {
             console.error(error)
             return null
@@ -112,6 +114,47 @@ class CartService {
 
     }
 
+    async addToCart(cid, pid) {
+        try {
+            const cart = await this.getAllCartById(cid);
+            
+
+            cart[0].products.filter(product => {
+                if (product.id === pid) {
+                    product.quantity = product.quantity + 1
+                }else{
+                    return { message: "This id doesn't exits"}
+                }
+            });
+
+            const listAllCarts = await this.getCartList();
+
+            const index = listAllCarts.findIndex(cart => cart.id === cid);
+        
+            if (index !== -1) {
+                listAllCarts[index] = cart[0]; 
+            }
+
+            await fs.writeFile(fileCart, JSON.stringify(listAllCarts))
+            return cart[0]
+        } catch (error) {
+            console.log(error)
+            return null;
+        }
+
+    }
+
+    async getAllCartById(id) {
+
+        console.log("starting get Cart by id", id)
+        try {
+            const carts = await this.getCartList()
+            return carts.filter(cart => cart.id === id);
+        } catch (error) {
+            return null;
+        }
+    }
+
 }
 
-module.exports.CartService  = CartService
+module.exports.CartService = CartService
