@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const filePath = path.resolve('src/implementation/datos/products.json');
-
+            const { v4: uuidv4 } = require('uuid');
 
 class ProductService {
     constructor() { }
@@ -35,14 +35,13 @@ class ProductService {
 
     async createProduct(body) {
         try {
-            const { v4: uuidv4 } = require('uuid');
+
             body.id = uuidv4();
             body.status = true;
             body.thumbnails = JSON.stringify(['img/product01', 'img/product02']);
             let products = await fs.readFile(filePath, 'utf8');
             products = JSON.parse(products);
             products.push(body)
-            console.log("body", JSON.stringify(products))
             await fs.writeFile(filePath, JSON.stringify(products));
             return body
         } catch (error) {
