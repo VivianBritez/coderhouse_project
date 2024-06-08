@@ -35,8 +35,9 @@ const createProduct = async (req, res) => {
     try {
         const productService = new ProductService();
         const data = await productService.createProduct(req.body);
+        console.log("data", data)
         if (data?.message) {
-            return ResponseHandler(res, data.message);
+            return ResponseHandler.badRequest(res, data.message);
         }
         return ResponseHandler.successCreated(res, data, 'Product created');
     } catch (error) {
