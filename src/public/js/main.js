@@ -1,4 +1,4 @@
-// public/js/main.js
+
 const socket = io();
 
 // Escucha mensajes del servidor
