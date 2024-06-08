@@ -5,14 +5,17 @@ const { v4: uuidv4 } = require('uuid');
 const MODULE = 'Cart'
 const fileCart = path.resolve('src/implementation/datos/cart.json')
 const productFile = path.resolve('src/implementation/datos/products.json')
+
+const getData = async (file ) =>{
+    return await fs.readFile(file, 'utf8');
+}
+
 class CartService {
     constructor() { }
 
     async getCartList() {
-        console.log("start")
         try {
-            let carts = await fs.readFile(fileCart, 'utf8');
-            console.log("filecarts", fileCart)
+            let carts = await getData(fileCart);
             carts = JSON.parse(carts);
             return carts
         } catch (error) {
@@ -22,7 +25,7 @@ class CartService {
     }
     async getAllProducts() {
         try {
-            let products = await fs.readFile(productFile, 'utf8');
+            let products = await getData(productFile);
             products = JSON.parse(products);
             return products
         } catch (error) {
@@ -36,8 +39,6 @@ class CartService {
             const doesntExits = []
             body.map(e => {
                 const productExists = products.some(product => product.id === e.id);
-
-
                 let obj = {
                     id: id,
                     products: e
@@ -116,23 +117,26 @@ class CartService {
 
     async addToCart(cid, pid) {
         try {
-            const cart = await this.getAllCartById(cid);
-            
 
-            cart[0].products.filter(product => {
-                if (product.id === pid) {
-                    product.quantity = product.quantity + 1
-                }else{
-                    return { message: "This id doesn't exits"}
-                }
-            });
+            const productList = await this.getAllProducts();
+            const prod = productList.filter(e => e.id === pid);
+            console.log("prod", prod)
+            const cart = await this.getAllCartById(cid);
+            if (prod.length == 0 || cart.length == 0) {
+                return { message: `Not found with this # ${cid}` }
+            }
+            const existingProductIndex = cart[0].products.findIndex(p => p.id === pid);
+            if (existingProductIndex !== -1) {
+                cart[0].products[existingProductIndex].quantity += 1;
+            } else {
+                cart[0].products.push({ id: pid, quantity: 1 });
+            }
 
             const listAllCarts = await this.getCartList();
-
             const index = listAllCarts.findIndex(cart => cart.id === cid);
-        
+
             if (index !== -1) {
-                listAllCarts[index] = cart[0]; 
+                listAllCarts[index] = cart[0];
             }
 
             await fs.writeFile(fileCart, JSON.stringify(listAllCarts))

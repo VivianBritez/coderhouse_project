@@ -24,7 +24,7 @@ class ResponseHandler {
     }
   
     static badRequest(res, message = 'Bad Request') {
-      this.error(res, message, 400);
+      this.error(res, message, 404);
     }
   
     static unauthorized(res, message = 'Unauthorized') {

@@ -1,0 +1,38 @@
+  <style>
+    .centered-form {
+      max-width: 50%;
+      margin: auto;
+    }
+  </style>
+<div class="container">
+    <h1 class="centered-form p-4 border rounded bg-light text-center">Crear producto</h1>
+    <div class="centered-form p-4 border rounded bg-light">
+      <form id="productForm">
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="title" required>
+        </div>
+        <div class="mb-3">
+          <label for="code" class="form-label">Code</label>
+          <input type="text" class="form-control" id="code" required>
+        </div>
+        <div class="mb-3">
+          <label for="price" class="form-label">Price</label>
+          <input type="number" class="form-control" id="price" required>
+        </div>
+        <div class="mb-3">
+          <label for="category" class="form-label">Category (optional)</label>
+          <input type="text" class="form-control" id="category">
+        </div>
+        <div class="mb-3">
+          <label for="description" class="form-label">Description (optional)</label>
+          <input type="text" class="form-control" id="description">
+        </div>
+        <div class="mb-3">
+          <label for="stock" class="form-label">Stock (optional)</label>
+          <input type="number" class="form-control" id="stock">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+    </div>
+  </div>
