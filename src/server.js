@@ -7,7 +7,22 @@ const handlebars = require('express-handlebars');
 const { Server } = require('socket.io')
 const http = require('http')
 const socketHandler = require('./utils/socket');
-const {ProductService} = require('./managers/products.service');
+const mongoose = require('mongoose')
+
+
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/mydatabase';
+//connect to database
+mongoose.connect(mongoUri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('Failed to connect to MongoDB', err);
+});
+
+
+
 app.use(express.json());
 app.use('/', routes)
 // Middleware para servir archivos estáticos
