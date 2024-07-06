@@ -6,9 +6,17 @@ const {ProductService} = require('../managers/products.service')
 
 // Función para obtener todos los productos
 const getAllProducts = async (req, res) => {
-    console.log("get all products")
     try {
-        const data = await ProductService.getAllProducts();
+        const sort = req.query.sort || 'desc';
+        const filters = {
+            page: parseInt(req.query.page) || 1,
+            limit: parseInt(req.query.limit) || 10,
+            sortOrder: sort === 'asc' ? 1 : -1,
+            category: req.query.category || null,
+            available: req.query.available || null
+        }
+    
+        const data = await ProductService.getAllProducts(filters);
         return ResponseHandler.success(res, data, 'List of products');
     } catch (error) {
         console.log("error", error)

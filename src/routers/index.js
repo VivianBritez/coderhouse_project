@@ -6,5 +6,6 @@ const realTimeProducts = require('./productRealTime')
 router.use('/api/products', productRouter);
 router.use('/api/cart', cartRouter)
 router.use('/realTimeProducts', realTimeProducts )
+router.use('/home', realTimeProducts )
 module.exports = router
 

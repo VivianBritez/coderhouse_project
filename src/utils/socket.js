@@ -9,7 +9,6 @@ module.exports = async (io) => {
         try {
 
             const listProducts = await ProductService.getAllProducts();
-
             socket.emit('productsUpdated', listProducts);
         } catch (error) {
             console.error('Error al obtener la lista de productos:', error);
@@ -39,7 +38,6 @@ module.exports = async (io) => {
             console.log('Mensaje de chat recibido:', message);
         });
 
-        // Manejar la desconexión del cliente
         socket.on('disconnect', () => {
             console.log('Cliente desconectado:', socket.id);
         });

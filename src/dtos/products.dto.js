@@ -6,7 +6,8 @@ const productScheme = yup.object().shape({
     'price': yup.number().required(),
     'stock': yup.number().required(),
     'category': yup.string(),
-    'thumbnails': yup.string()
+    'thumbnails': yup.string(),
+    "available": yup.boolean()
 }).strict().noUnknown(true, (unknownField) => `Unknown field: ${unknownField.unknown} is not allowed`);
 
 module.exports = productScheme;

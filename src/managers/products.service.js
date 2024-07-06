@@ -13,11 +13,24 @@ class ProductService {
     static initializeSocket(socketIo) {
         io = socketIo;
     }
-    static async getAllProducts() {
+
+
+    async getAll() {
         try {
-            const data = await ProductRepository.getAll()
-            const products = JSON.parse(data);
-            return products
+            const data = await ProductRepository.getAllData();
+            return data
+        } catch (error) {
+            console.log("error", error)
+            return null;
+
+        }
+    }
+    static async getAllProducts(filters) {
+    
+        try {
+            const data = await ProductRepository.getAll(filters);
+            const {products, pagination} = data
+            return {products, pagination }
         } catch (error) {
             console.log("error", error)
             return null;
@@ -27,23 +40,27 @@ class ProductService {
     static async getById(id) {
         try {
             const product = await ProductRepository.getById(id);
+            if (!product) {
+               return []
+            }
             return product;
-          } catch (error) {
-            throw error;
-          }
+        } catch (error) {
+            console.error(`Error in ProductService.getById(${id}):`, error);
+           return `Error in ProductService.getById(${id}):`
+            
+        }
     }
 
     async createProduct(productData) {
+
+        console.log("created products")
         try {
 
             const existingProduct = await ProductRepository.findByCode(productData.code);
             if (existingProduct) {
               return { message: 'The code already exists' };
             }
-            
-            productData.id = uuidv4();
-            productData.status = true;
-            productData.thumbnails = JSON.stringify(['img/product01', 'img/product02']);
+        
             const createdProduct = await ProductRepository.create(productData);
             await this.getAllProductsSocket(); 
       
@@ -97,10 +114,9 @@ class ProductService {
 
     async getAllProductsSocket() {
         try {
-            const data = await this.getAllProducts()
-            const products = JSON.parse(data);
+            const products = await this.getAll()
             if (io) {
-                io.emit('productsUpdated', products); // Emitir la lista de productos a través de Socket.io
+                io.emit('productsUpdated', products); 
             } else {
                 console.error("Socket.io no está inicializado.");
             }

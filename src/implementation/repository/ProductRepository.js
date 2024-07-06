@@ -1,4 +1,6 @@
+const productScheme = require('../../dtos/products.dto');
 const Product = require('../schema/product.schema');
+
 
 class ProductRepository {
   async create(productData) {
@@ -11,23 +13,79 @@ class ProductRepository {
     }
   }
 
-  async getAll() {
+  async getAll(filter) {
     try {
-      const products = await Product.find();
-      return products;
+    let sortOrder =  -1
+    const query = {}
+    let page = 1
+    let limit = 10
+    if(filter){
+     page = filter.page
+     limit = filter.limit
+    if (filter.category !== null) {
+      query.category = filter.category;
+    }
+    if (filter.available !== null) {
+      query.available = filter.available;
+    }
+    if(filter.sortOrder){
+      sortOrder = filter.sortOrder
+    }
+  }
+  const sort = { price :  sortOrder };  
+      const products = await Product.find(query)
+        .sort(sort)
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      const totalProducts = await Product.countDocuments();
+      const totalPages = Math.ceil(totalProducts / limit);
+      const hasPrevPage = page > 1;
+      const hasNextPage = page < totalPages;
+      const prevPage = hasPrevPage ? page - 1 : null;
+      const nextPage = hasNextPage ? page + 1 : null;
+      const prevLink = hasPrevPage ? `/realtimeproducts?page=${prevPage}&limit=${limit}` : null;
+      const nextLink = hasNextPage ? `/realtimeproducts?page=${nextPage}&limit=${limit}` : null;
+
+      return {
+        products,
+        pagination: {
+          totalProducts,
+          totalPages,
+          currentPage: page,
+          limit: limit,
+          hasPrevPage,
+          hasNextPage,
+          prevPage,
+          nextPage,
+          prevLink,
+          nextLink,
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  };
+  async getAllData() {
+    try {
+      const products = await Product.find()
+      return products
     } catch (error) {
       throw error;
     }
   }
 
-  async getById(productId) {
+  async getById(_id) {
     try {
-      const product = await Product.findById(productId);
+      const product = await Product.findById(_id);
+      console.log("product", product)
       if (!product) {
-        throw new Error('Product not found');
+        return []
       }
-      return product;
+      return product
+    
     } catch (error) {
+      console.log(error)
       throw error;
     }
   }

@@ -2,22 +2,25 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const { v4: uuidv4 } = require('uuid');
+const CartRepository = require('../implementation/repository/CartRespository');
+const { ProductService } = require('../managers/products.service')
 const MODULE = 'Cart'
 const fileCart = path.resolve('src/implementation/datos/cart.json')
 const productFile = path.resolve('src/implementation/datos/products.json')
 
-const getData = async (file ) =>{
+const getData = async (file) => {
     return await fs.readFile(file, 'utf8');
 }
 
+
 class CartService {
-    constructor() { }
+    constructor() {
+        this.cartRepository = new CartRepository()
+    }
 
     async getCartList() {
         try {
-            let carts = await getData(fileCart);
-            carts = JSON.parse(carts);
-            return carts
+            return await CartRepository.getData()
         } catch (error) {
 
             return []
@@ -25,139 +28,162 @@ class CartService {
     }
     async getAllProducts() {
         try {
-            let products = await getData(productFile);
-            products = JSON.parse(products);
+            let products = await ProductService.getAll()
+            console.log("procuts", products)
             return products
         } catch (error) {
             return []
         }
     }
-    async validateProducts(products, body, id) {
+    async validateProducts(products) {
         try {
-
-            let data = []
-            const doesntExits = []
-            body.map(e => {
-                const productExists = products.some(product => product.id === e.id);
-                let obj = {
-                    id: id,
-                    products: e
-                };
-
-                if (productExists) {
-                    data.push(obj)
+            const validProducts = [];
+            for (const prod of products) {
+                const obj = {}
+                const product = await ProductService.getById(prod.id)
+                if (product) {
+                    obj._id = prod.id
+                    obj.quantity= prod.quantity
+                    validProducts.push(obj);
                 } else {
-                    doesntExits.push(e);
+                    return {
+                        error: true,
+                        message: (`Product with ID ${prod.id} not found.`)
+                    }
                 }
-
-            });
-            const listProduct = []
-            let newCart = [{ id: id, products: listProduct }]
-
-            const invalidProductIds = doesntExits.map(item => item.id);
-
-            data.map(e => e.products).filter(item => {
-
-                let obj = {}
-                if (invalidProductIds !== item.id) {
-                    obj.id = item.id
-                    obj.quantity = item.quantity
-                    listProduct.push(obj)
-                }
-            });
-
-            console.log('new cart', newCart);
-
-            newCart = listProduct.length === 0 ? [] : [{ id: id, products: listProduct }]
-
-            return {
-                validate: newCart,
-                noValidate: doesntExits.map(e => e.id)
             }
-
+            return validProducts;
         } catch (error) {
-            console.log(error)
-            return false
+            return {
+                error: true,
+                message: (`Product with ID ${error.value} not found.`)
+            };
         }
+
+
+
+
     }
     async createCart(body) {
-        console.log(`${MODULE}, creating cart`);
-        body.id = uuidv4();
         try {
-            const products = await this.getAllProducts();
-            const data = await this.validateProducts(products, body.products, body.id);
-            console.log("validacion ", data)
-            const cartsList = await this.getCartList();
-            if (data.validate.length > 0) cartsList.push(data.validate[0]);
-            await fs.writeFile(fileCart, JSON.stringify(cartsList));
-            let message, isValidate;
-            if (data.noValidate.length > 0 && data.validate.length === 0) {
-                message = `No se pudo crear el carrito por que no existen los ids 
-                 ${data.noValidate} enviados`
-                isValidate = false
-            } else if (data.noValidate.length > 0 && data.validate.length > 0) {
-
-                message = `Algunos productos seleccionados ya no existen o hubo un error revisar los ids 
-                ${data.noValidate} enviados`
-                isValidate = true
-
-            } else if (data.noValidate.length == 0 && data.validate.length > 0) {
-                message = 'Se ha creado exitosamente'
-                isValidate = true
-
+            const data = await this.validateProducts(body.products);
+            if (data.error) {
+                return data
             }
-            body = data.validate
-            return { message, body, isValidate }
+
+            const createdCart = await this.cartRepository.createCart({ products: data });
+            return createdCart
         } catch (error) {
-            console.error(error)
-            return null
+            console.log("create cart ", error.message, error.value)
+            return error
         }
 
     }
 
-    async addToCart(cid, pid) {
+    async addToCart(cid, body) {
         try {
-
-            const productList = await this.getAllProducts();
-            const prod = productList.filter(e => e.id === pid);
-            console.log("prod", prod)
-            const cart = await this.getAllCartById(cid);
-            if (prod.length == 0 || cart.length == 0) {
-                return { message: `Not found with this # ${cid}` }
+            // Verificar si el carrito existe
+            const cartExists = await this.cartRepository.findCartById(cid)
+            if (!cartExists) {
+                return {
+                    error: true,
+                    mss: `El carrito con ID ${cid} no existe.`,
+                };
             }
-            const existingProductIndex = cart[0].products.findIndex(p => p.id === pid);
-            if (existingProductIndex !== -1) {
-                cart[0].products[existingProductIndex].quantity += 1;
-            } else {
-                cart[0].products.push({ id: pid, quantity: 1 });
+            const arrProduct = []
+            for (const product of body.products) {
+                const obj = {}
+                const existingProduct = await ProductService.getById(product.id);
+
+                if (!existingProduct) {
+                    return {
+                        error: true,
+                        mss: `El producto con ID ${product.id} no existe.`,
+                    };
+                }
+                obj._id = product.id,
+                obj.quantity = product.quantity
+                arrProduct.push(obj)
+
             }
 
-            const listAllCarts = await this.getCartList();
-            const index = listAllCarts.findIndex(cart => cart.id === cid);
-
-            if (index !== -1) {
-                listAllCarts[index] = cart[0];
-            }
-
-            await fs.writeFile(fileCart, JSON.stringify(listAllCarts))
-            return cart[0]
+            const add = await this.cartRepository.addToCart(cartExists, arrProduct);
+            return add;
         } catch (error) {
-            console.log(error)
-            return null;
+            return {
+                error: true,
+                mss: `Error al agregar productos al carrito: ${error.message}`,
+            };
         }
-
     }
 
     async getAllCartById(id) {
-
-        console.log("starting get Cart by id", id)
         try {
-            const carts = await this.getCartList()
-            return carts.filter(cart => cart.id === id);
+            const carts = await this.cartRepository.findCartById(id)
+            return carts
         } catch (error) {
-            return null;
+            console.log("error cart", error)
         }
     }
+
+
+    async updateCartProduct(cid, pid, body) {
+        try {
+            const cart = await this.getAllCartById(cid);
+            cart.products.map(prod => {
+                if (pid ==  prod._id._id) {
+                    prod.quantity = body.quantity
+                }
+            })
+            const add = await this.cartRepository.updateCart(cart);
+            return add;
+        } catch (error) {
+            console.log(error)
+            return {
+                error: true,
+                mss: `This id doesn-t exits ${error.stringValue}`
+            }
+        }
+
+    }
+
+    async deleteProductById(cid, pid) {
+        try {
+            const cart = await this.getAllCartById(cid);
+            const arrayProd = []
+            cart.products.map(prod => {
+                if (pid !=  prod._id._id) {
+                    arrayProd.push(prod)
+                }
+            })
+            const add = await this.cartRepository.addToCart(cart, arrayProd);
+            return add;
+        } catch (error) {
+            console.log(error)
+            return {
+                error: true,
+                mss: `This id doesn-t exits ${error.stringValue}`
+            }
+        }
+
+    }
+
+    async cleanCart(cid) {
+        try {
+            const cart = await this.getAllCartById(cid);
+            const add = await this.cartRepository.addToCart(cart, []);
+            return add;
+        } catch (error) {
+            console.log(error)
+            return {
+                error: true,
+                mss: `This id doesn-t exits ${error.stringValue}`
+            }
+        }
+
+    }
+
+
 
 }
 

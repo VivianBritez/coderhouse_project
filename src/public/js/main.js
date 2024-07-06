@@ -62,21 +62,60 @@ function renderProductList(products) {
     const productList = document.getElementById('productList');
     productList.innerHTML = ''; // Limpiar la tabla antes de agregar los nuevos productos
 
-    products.forEach(product => {
+    products.products.forEach(product => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${product.id}</td>
+            <td>${product._id}</td>
             <td>${product.title}</td>
             <td>${product.code}</td>
             <td>${product.price}</td>
             <td>${product.category}</td>
             <td>${product.description}</td>
             <td>${product.stock}</td>
-            <td>${product.status ? 'Activo' : 'Inactivo'}</td>
+            <td>${product.available ? 'Activo' : 'Inactivo'}</td>
             <td>${product.thumbnails}</td>
         `;
         productList.appendChild(row);
     });
+
+    updatePaginationUI(products.pagination)
+}
+
+
+function updatePaginationUI(pagination) {
+    const paginationContainer = document.getElementById('paginationContainer');
+    paginationContainer.innerHTML = ''; 
+
+    const { currentPage, totalPages, prevLink, nextLink } = pagination;
+
+    if (totalPages > 1) {
+        const prevButton = createPaginationButton('Anterior', prevLink, currentPage > 1);
+        paginationContainer.appendChild(prevButton);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = createPaginationButton(i.toString(), `?page=${i}`, true, currentPage === i);
+            paginationContainer.appendChild(pageButton);
+        }
+
+        const nextButton = createPaginationButton('Siguiente', nextLink, currentPage < totalPages);
+        paginationContainer.appendChild(nextButton);
+    }
+}
+
+function createPaginationButton(text, link, isEnabled, isActive = false) {
+    const button = document.createElement('button');
+    button.className = `page-link ${isActive ? 'active' : ''}`;
+    button.textContent = text;
+
+    if (isEnabled) {
+        button.addEventListener('click', () => {
+            window.location.href = link;
+        });
+    } else {
+        button.disabled = true;
+    }
+
+    return button;
 }
 
 
