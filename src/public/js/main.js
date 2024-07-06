@@ -1,4 +1,4 @@
-// public/js/main.js
+
 const socket = io();
 
 // Escucha mensajes del servidor
@@ -23,7 +23,7 @@ document.getElementById('productForm').addEventListener('submit', (event) => {
   const description = document.getElementById('description').value || null;
   const stock = document.getElementById('stock').value || null;
 
-  // Crear un objeto con los datos del formulario
+  
   const productData = {
     title,
     code,
@@ -45,7 +45,7 @@ document.getElementById('productForm').addEventListener('submit', (event) => {
 // Escuchar la lista actualizada de productos del servidor
 socket.on('productsUpdated', (products) => {
     console.log('Lista actualizada de productos:', products);
-    // Aquí puedes actualizar la interfaz de usuario con la lista de productos
+    
 });
 
 
