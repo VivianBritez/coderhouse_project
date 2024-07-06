@@ -148,16 +148,18 @@ class CartService {
     }
 
     async deleteProductById(cid, pid) {
+  
         try {
             const cart = await this.getAllCartById(cid);
             const arrayProd = []
+
             cart.products.map(prod => {
                 if (pid !=  prod._id._id) {
                     arrayProd.push(prod)
                 }
             })
-            const add = await this.cartRepository.addToCart(cart, arrayProd);
-            return add;
+             const add = await this.cartRepository.addToCart(cart, arrayProd);
+            return add; 
         } catch (error) {
             console.log(error)
             return {

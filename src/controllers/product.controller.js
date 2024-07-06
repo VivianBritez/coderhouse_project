@@ -31,7 +31,7 @@ const getProductById = async (req, res) => {
         if (data?.message) {
             return ResponseHandler.notFound(res, data.message);
         } else {
-            return ResponseHandler.success(res, data[0], 'Product');
+            return ResponseHandler.success(res, data, 'Product');
         }
     } catch (error) {
         return ResponseHandler.internalError(res);
